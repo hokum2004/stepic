@@ -33,6 +33,9 @@ int main(int argc, char * const argv[])
 
     close(file);
 
+    if (msgctl(msgq_id, IPC_RMID, nullptr) == -1)
+        perror("msgctl");
+
     return 0;
 }
 
