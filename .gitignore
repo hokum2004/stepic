@@ -27,3 +27,10 @@
 *.exe
 *.out
 *.app
+
+# Temporary files
+*.swp
+*.bak
+*.tmp
+*.old
+
