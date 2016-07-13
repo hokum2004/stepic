@@ -1,3 +1,4 @@
+#include "FileCursor.h"
 #include <fstream>
 #include <iostream>
 
@@ -9,16 +10,21 @@ int main(int argc, const char * const argv[])
     }
     const char * const filename = argv[1];
 
-    std::ifstream baseFile;
-    baseFile.open(filename);
-    if (!baseFile.is_open()) {
+    std::filebuf baseFile;
+    if (baseFile.open(filename, std::ios_base::in) == NULL) {
         std::cerr << "Can't open file '" << filename << "'." << std::endl;
         return 1;
     }
 
-    std::ifstream::pos_type endPos = baseFile.seekg(0, std::ios_base::end).tellg();
-    baseFile.seekg(0);
+    std::filebuf::pos_type endPos = baseFile.pubseekoff(
+        0,
+        std::ios_base::end,
+        std::ios_base::in);
 
+    baseFile.pubseekoff(
+        0,
+        std::ios_base::beg,
+        std::ios_base::in);
 
     baseFile.close();
     return 0;
