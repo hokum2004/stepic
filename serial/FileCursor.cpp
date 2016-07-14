@@ -2,6 +2,7 @@
 
 #include <ios>
 #include <cassert>
+#include <limits>
 
 namespace
 {
@@ -30,6 +31,9 @@ FileCursor::pos_type findEnd(std::filebuf& file, FileCursor::pos_type desireEnd)
 {
     const auto endPos = file.pubseekoff(0, ios_base::end, ios_base::in);
 
+    if (desireEnd == -1)
+        return endPos;
+
     auto cur = file.pubseekoff(desireEnd, ios_base::beg, ios_base::in);
 
     while(cur != endPos)
@@ -52,7 +56,9 @@ FileCursor::FileCursor(std::filebuf& file, pos_type begin_, pos_type end_):
     begin(findBegin(file,begin_)),
     end(findEnd(file, end_)),
     cur(begin),
-    value(-1)
+    value(-1),
+    lastValue(std::numeric_limits<int>::max()),
+    isEnd_(false)
 {
     assert(begin != end);
     next();
@@ -75,18 +81,39 @@ int FileCursor::getValue() const
 
 bool FileCursor::isEnd() const
 {
-    return cur == end;
+    return isEnd_;
+}
+
+bool FileCursor::isEndOfRun() const
+{
+    return isEnd() || (value < lastValue);
 }
 
 bool FileCursor::next()
 {
+    lastValue = value;
+    bool isRead;
+    std::tie(cur, value, isRead) = readValue();
+
+    if (!isRead) {
+        isEnd_ = true;
+        return false;
+    }
+
+    return true;
+}
+
+std::tuple<FileCursor::pos_type, int /*value*/, bool /*end*/> FileCursor::readValue()
+{
     file.pubseekpos(cur, ios_base::in);
+    pos_type newCur = cur;
     int read = 0;
     bool isRead = false;
-    while(!isEnd())
+
+    while(newCur != end)
     {
         const auto curSymbol = static_cast<char>(file.sbumpc());
-        cur = file.pubseekoff(0, ios_base::cur, ios_base::in);
+        newCur = file.pubseekoff(0, ios_base::cur, ios_base::in);
 
         if (std::isdigit(curSymbol)) {
             read = read * 10 + (curSymbol - '0');
@@ -95,9 +122,7 @@ bool FileCursor::next()
         else
             break;
     }
-    if (!isRead)
-        return false;
 
-    value = read;
-    return true;
+    return std::make_tuple(newCur, (isRead? read: -1), isRead);
 }
+
