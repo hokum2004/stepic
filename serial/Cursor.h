@@ -1,14 +1,14 @@
-#ifndef __FILECURSOR_H__
-#define __FILECURSOR_H__
+#ifndef __CURSOR_H__
+#define __CURSOR_H__
 
 #include <streambuf>
 #include <tuple>
 
-class FileCursor
+class Cursor
 {
 public:
     using pos_type = std::streambuf::pos_type;
-    FileCursor(std::streambuf& file, pos_type begin, pos_type end);
+    Cursor(std::streambuf& file, pos_type begin, pos_type end);
 
     pos_type posBegin() const;
     pos_type posEnd() const;
@@ -29,4 +29,4 @@ private:
     bool isEnd_;
 };
 
-#endif //!__FILECURSOR_H__
+#endif //!__CURSOR_H__

@@ -1,4 +1,4 @@
-#include "FileCursor.h"
+#include "Cursor.h"
 
 #include <ios>
 #include <cassert>
@@ -9,7 +9,7 @@ namespace
 
 using namespace std;
 
-FileCursor::pos_type findBegin(std::streambuf& file, FileCursor::pos_type desireBegin)
+Cursor::pos_type findBegin(std::streambuf& file, Cursor::pos_type desireBegin)
 {
     const auto endPos = file.pubseekoff(0, ios_base::end, ios_base::in);
     auto cur = file.pubseekpos(desireBegin, ios_base::in);
@@ -27,7 +27,7 @@ FileCursor::pos_type findBegin(std::streambuf& file, FileCursor::pos_type desire
     return cur;
 }
 
-FileCursor::pos_type findEnd(std::streambuf& file, FileCursor::pos_type desireEnd)
+Cursor::pos_type findEnd(std::streambuf& file, Cursor::pos_type desireEnd)
 {
     const auto endPos = file.pubseekoff(0, ios_base::end, ios_base::in);
 
@@ -51,7 +51,7 @@ FileCursor::pos_type findEnd(std::streambuf& file, FileCursor::pos_type desireEn
 
 } //anonymous namespace
 
-FileCursor::FileCursor(std::streambuf& file, pos_type begin_, pos_type end_):
+Cursor::Cursor(std::streambuf& file, pos_type begin_, pos_type end_):
     file(file),
     begin(findBegin(file,begin_)),
     end(findEnd(file, end_)),
@@ -64,32 +64,32 @@ FileCursor::FileCursor(std::streambuf& file, pos_type begin_, pos_type end_):
     next();
 }
 
-FileCursor::pos_type FileCursor::posBegin() const
+Cursor::pos_type Cursor::posBegin() const
 {
     return begin;
 }
 
-FileCursor::pos_type FileCursor::posEnd() const
+Cursor::pos_type Cursor::posEnd() const
 {
     return end;
 }
 
-int FileCursor::getValue() const
+int Cursor::getValue() const
 {
     return value;
 }
 
-bool FileCursor::isEnd() const
+bool Cursor::isEnd() const
 {
     return isEnd_;
 }
 
-bool FileCursor::isEndOfRun() const
+bool Cursor::isEndOfRun() const
 {
     return isEnd() || (value < lastValue);
 }
 
-bool FileCursor::next()
+bool Cursor::next()
 {
     lastValue = value;
     bool isRead;
@@ -103,7 +103,7 @@ bool FileCursor::next()
     return true;
 }
 
-std::tuple<FileCursor::pos_type, int /*value*/, bool /*end*/> FileCursor::readValue()
+std::tuple<Cursor::pos_type, int /*value*/, bool /*end*/> Cursor::readValue()
 {
     file.pubseekpos(cur, ios_base::in);
     pos_type newCur = cur;

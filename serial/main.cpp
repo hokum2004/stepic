@@ -1,9 +1,9 @@
-#include "FileCursor.h"
+#include "Cursor.h"
 #include <fstream>
 #include <iostream>
 #include <string>
 
-int copyRun(FileCursor& cursor, std::ofstream& out)
+int copyRun(Cursor& cursor, std::ofstream& out)
 {
     if (cursor.isEnd())
         return 0;
@@ -18,7 +18,7 @@ int copyRun(FileCursor& cursor, std::ofstream& out)
     return 1;
 }
 
-int split(FileCursor& cursor, const char * out1, const char * out2)
+int split(Cursor& cursor, const char * out1, const char * out2)
 {
     using namespace std;
     ofstream f1;
@@ -48,7 +48,7 @@ int split(FileCursor& cursor, const char * out1, const char * out2)
     return countOfRun;
 }
 
-bool merge(FileCursor& cur1, FileCursor& cur2, const char* out)
+bool merge(Cursor& cur1, Cursor& cur2, const char* out)
 {
     using namespace std;
     ofstream os;
@@ -108,7 +108,7 @@ int main(int argc, const char * const argv[])
         std::ios_base::in);
 
 
-    FileCursor cur1(baseFile, 0, -1);
+    Cursor cur1(baseFile, 0, -1);
 
     int countOfRun = split(cur1, bufs[0], bufs[1]);
     std::cout << "countOfRun = " << countOfRun << std::endl;
