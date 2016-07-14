@@ -89,6 +89,11 @@ bool Cursor::isEndOfRun() const
     return isEnd() || (value < lastValue);
 }
 
+void Cursor::resetEndOfRun()
+{
+    lastValue = value;
+}
+
 bool Cursor::next()
 {
     lastValue = value;
