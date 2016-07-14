@@ -3,40 +3,36 @@
 #include <iostream>
 #include <string>
 
-int copyRun(FileCursor& cursor, std::filebuf& out)
+int copyRun(FileCursor& cursor, std::ofstream& out)
 {
     if (cursor.isEnd())
         return 0;
 
     do
     {
-        std::string str = std::to_string(cursor.getValue()) + " ";
-        out.sputn(str.c_str(), str.length());
+        out << cursor.getValue() << " ";
         cursor.next();
     }
     while(!cursor.isEndOfRun());
-/*
-    if (!cursor.isEnd())
-    {
-        std::string str = std::to_string(cursor.getValue()) + " ";
-        out.sputn(str.c_str(), str.length());
-        cursor.next();
-    }
-*/
+
     return 1;
 }
 
 int split(FileCursor& cursor, const char * out1, const char * out2)
 {
     using namespace std;
-    filebuf f1;
-    if (f1.open(out1, ios_base::out | ios_base::trunc) == NULL) {
+    ofstream f1;
+    f1.open(out1, ios_base::out | ios_base::trunc);
+    if (!f1.is_open())
+    {
         std::cerr << "split: Can't open file '" << out1 << "'" << std::endl;
         return -1;
     }
 
-    filebuf f2;
-    if (f2.open(out2, ios_base::out | ios_base::trunc) == NULL) {
+    ofstream f2;
+    f2.open(out2, ios_base::out | ios_base::trunc);
+    if( !f2.is_open())
+    {
         std::cerr << "split: Can't open file '" << out2 << "'" << std::endl;
         return -1;
     }
@@ -50,6 +46,39 @@ int split(FileCursor& cursor, const char * out1, const char * out2)
     }
 
     return countOfRun;
+}
+
+bool merge(FileCursor& cur1, FileCursor& cur2, const char* out)
+{
+    using namespace std;
+    ofstream os;
+    os.open(out, ios_base::out | ios_base::trunc);
+    if (!os.is_open())
+    {
+        std::cerr << "merge: Can't open file '" << out << "'" << std::endl;
+        return false;
+    }
+
+    do
+    {
+        if (cur1.getValue() < cur2.getValue()) {
+            os << cur1.getValue() << " ";
+            cur1.next();
+        }
+        else {
+            os << cur2.getValue() << " ";
+            cur2.next();
+        }
+    }
+    while(!cur1.isEndOfRun() && !cur2.isEndOfRun());
+
+    if (!cur1.isEndOfRun())
+        copyRun(cur1, os);
+
+    if (!cur2.isEndOfRun())
+        copyRun(cur2, os);
+
+    return true;
 }
 
 int main(int argc, const char * const argv[])

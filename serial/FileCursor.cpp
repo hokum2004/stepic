@@ -9,7 +9,7 @@ namespace
 
 using namespace std;
 
-FileCursor::pos_type findBegin(std::filebuf& file, FileCursor::pos_type desireBegin)
+FileCursor::pos_type findBegin(std::streambuf& file, FileCursor::pos_type desireBegin)
 {
     const auto endPos = file.pubseekoff(0, ios_base::end, ios_base::in);
     auto cur = file.pubseekpos(desireBegin, ios_base::in);
@@ -27,7 +27,7 @@ FileCursor::pos_type findBegin(std::filebuf& file, FileCursor::pos_type desireBe
     return cur;
 }
 
-FileCursor::pos_type findEnd(std::filebuf& file, FileCursor::pos_type desireEnd)
+FileCursor::pos_type findEnd(std::streambuf& file, FileCursor::pos_type desireEnd)
 {
     const auto endPos = file.pubseekoff(0, ios_base::end, ios_base::in);
 
@@ -51,7 +51,7 @@ FileCursor::pos_type findEnd(std::filebuf& file, FileCursor::pos_type desireEnd)
 
 } //anonymous namespace
 
-FileCursor::FileCursor(std::filebuf& file, pos_type begin_, pos_type end_):
+FileCursor::FileCursor(std::streambuf& file, pos_type begin_, pos_type end_):
     file(file),
     begin(findBegin(file,begin_)),
     end(findEnd(file, end_)),

@@ -9,4 +9,4 @@ $(target): $(objects)
 .PHONY: clean
 
 clean:
-	rm -rf $(target) $(source)
+	rm -rf $(target) $(objects)
