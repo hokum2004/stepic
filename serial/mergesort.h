@@ -1,10 +1,6 @@
-#include "ICursor.h"
-
-#include <fstream>
-
-int copyRun(ICursor& cursor, std::ofstream& out);
-int split(ICursor& cursor, const char * out1, const char * out2);
-bool merge(ICursor& cur1, ICursor& cur2, const char* out);
+#ifndef __MERGESORT_H__
+#define __MERGESORT_H__
 
 void mergesort(const char * filename);
 
+#endif //!__MERGESORT_H__
