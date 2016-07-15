@@ -39,10 +39,6 @@ using Position = std::pair<pos_type, pos_type>;
 
 void msort(const char * filename, Filenames& bufs, Position& pos)
 {
-#pragma omp critical
-    {
-    std::cout << omp_get_thread_num() << ": " << pos.first << "," << pos.second << std::endl;
-    }
     FileCursor curBase(filename, pos.first, pos.second);
     int countOfRun = aux_sort::split(curBase, bufs.part0(), bufs.part1());
 
@@ -128,10 +124,6 @@ int main(int argc, const char * const argv[])
         //omp_set_num_threads(((countThreads == 0) ? 1: countThreads));
         omp_set_num_threads(countThreads);
 
-        std::cout << "results:\n";
-        for(auto res: results)
-            std::cout << res << std::endl;
-        std::cout << "--------" << std::endl;
 #pragma omp parallel
         {
             int t = omp_get_thread_num();
