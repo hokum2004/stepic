@@ -135,17 +135,22 @@ int main(int argc, const char * const argv[])
 #pragma omp parallel
         {
             int t = omp_get_thread_num();
-#pragma omp critical
+
+            std::string cmd;
+
+            for (int i = 0; i < 2; ++i)
             {
-                std::string cmd = std::string("cp ") + results.front() + " " + bufs[t].part0();
-                results.pop_front();
-                std::cout << "run: " << cmd << std::endl;
-                system(cmd.c_str());
-                cmd = std::string("cp ") + results.front() + " " + bufs[t].part1();
-                results.pop_front();
-                std::cout << "run: " << cmd << std::endl;
+#pragma omp critical
+                {
+                    cmd = std::string("cp ") + 
+                          results.front() + " " + 
+                          (i == 0? bufs[t].part0(): bufs[t].part1());
+                    results.pop_front();
+                }
                 system(cmd.c_str());
             }
+
+#pragma omp barrier
 
             FileCursor part0(bufs[t].part0());
             FileCursor part1(bufs[t].part1());
