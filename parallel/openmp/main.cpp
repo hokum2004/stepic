@@ -7,6 +7,7 @@
 #include <tuple>
 #include <memory>
 #include <vector>
+#include <deque>
 #include <cstdlib>
 
 #include <omp.h>
@@ -38,6 +39,10 @@ using Position = std::pair<pos_type, pos_type>;
 
 void msort(const char * filename, Filenames& bufs, Position& pos)
 {
+#pragma omp critical
+    {
+    std::cout << omp_get_thread_num() << ": " << pos.first << "," << pos.second << std::endl;
+    }
     FileCursor curBase(filename, pos.first, pos.second);
     int countOfRun = aux_sort::split(curBase, bufs.part0(), bufs.part1());
 
@@ -63,7 +68,10 @@ int main(int argc, const char * const argv[])
 
     const char * filename = argv[1];
 
-    omp_set_num_threads(4);
+    //omp_set_num_threads(4);
+    if (argc > 2) {
+        omp_set_num_threads(std::stoi(argv[2]));
+    }
 
     int countThreads = omp_get_max_threads();
     //TODO: should  be power of 2
@@ -103,29 +111,48 @@ int main(int argc, const char * const argv[])
     }
     positions[countThreads - 1] = std::make_pair(start, -1);
 
+    std::deque<const char*> results;
 #pragma omp parallel
     {
         int t = omp_get_thread_num();
         msort(filename, bufs[t], positions[t]);
+#pragma omp critical
+        {
+            results.emplace_back(bufs[t].res());
+        }
     }
 
-    if (countThreads > 1)
+    while(results.size() > 1)
     {
-        while(countThreads > 0)
-        {
-            countThreads = countThreads / 2;
-            omp_set_num_threads(((countThreads == 0) ? 1: countThreads));
-#pragma omp parallel
-            {
-                int t = omp_get_thread_num() * 2;
-                std::string cmd = std::string("cp ") + bufs[t].res() + " " + bufs[t].part0();
-                system(cmd.c_str());
-                cmd = std::string("cp ") + bufs[t+1].res() + " " + bufs[t+1].part0();
-                system(cmd.c_str());
+        countThreads = countThreads / 2;
+        //omp_set_num_threads(((countThreads == 0) ? 1: countThreads));
+        omp_set_num_threads(countThreads);
 
-                FileCursor part0(bufs[t].part0());
-                FileCursor part1(bufs[t+1].part0());
-                aux_sort::merge(part0, part1, bufs[t].res());
+        std::cout << "results:\n";
+        for(auto res: results)
+            std::cout << res << std::endl;
+        std::cout << "--------" << std::endl;
+#pragma omp parallel
+        {
+            int t = omp_get_thread_num();
+#pragma omp critical
+            {
+                std::string cmd = std::string("cp ") + results.front() + " " + bufs[t].part0();
+                results.pop_front();
+                std::cout << "run: " << cmd << std::endl;
+                system(cmd.c_str());
+                cmd = std::string("cp ") + results.front() + " " + bufs[t].part1();
+                results.pop_front();
+                std::cout << "run: " << cmd << std::endl;
+                system(cmd.c_str());
+            }
+
+            FileCursor part0(bufs[t].part0());
+            FileCursor part1(bufs[t].part1());
+            aux_sort::merge(part0, part1, bufs[t].res());
+#pragma omp critical
+            {
+                results.push_back(bufs[t].res());
             }
         }
     }
