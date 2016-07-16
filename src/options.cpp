@@ -1,5 +1,22 @@
 #include "options.h"
 
+#include <iostream>
+
+#include <unistd.h>
+
+namespace
+{
+
+void printUsage(const char * name)
+{
+    std::cerr
+        << "Usage: " << name
+        << " [-h <ip>] [-p <port>] [-d <directory>] [-n]"
+        << std::endl;
+}
+
+} /* anonymous namespace */
+
 namespace http_server
 {
 
@@ -52,3 +69,34 @@ bool Options::daemon() const
 
 
 } /* namespace http_server */
+
+
+http_server::Options http_server::parseArgs(int argc, char* const argv[])
+{
+    http_server::Options options;
+
+    const char * const optstring = "h:p:d:n";
+    int opt = -1;
+    while ((opt = getopt(argc, argv, optstring)) != -1) {
+        switch(opt) {
+            case 'h':
+                options.setIp(optarg);
+                break;
+            case 'p':
+                options.setPort(std::atoi(optarg));
+                break;
+            case 'd':
+                options.setDirectory(optarg);
+                break;
+            case 'n':
+                options.setDaemon(false);
+                break;
+            case '?':
+                printUsage(argv[0]);
+            default:
+                exit(EXIT_FAILURE);
+                break;
+        }
+    }
+    return options;
+}

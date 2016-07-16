@@ -26,6 +26,8 @@ private:
     bool daemon_;
 };
 
+Options parseArgs(int argc, char* const argv[]);
+
 } /* namespace http_server */
 
 #endif //!__OPTIONS_H__
