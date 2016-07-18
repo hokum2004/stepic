@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <iomanip>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -11,6 +12,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+
 
 namespace
 {
@@ -114,6 +116,16 @@ bool startListen(const aux::UniqueFd& sockfd, const http_server::Options& option
     return true;
 }
 
+void outputBinaryData(const char * data, size_t size)
+{
+    std::cout << std::setfill('0');
+    for(size_t i = 0; i < size; ++i)
+        std::cout << std::setw(2) << std::hex
+                  << static_cast<int>(data[i]) << " ";
+    std::cout << std::endl;
+    std::cout << std::setfill(' ');
+}
+
 } /* anonymous namespace */
 
 int http_server::run(const http_server::Options& options)
@@ -143,6 +155,31 @@ int http_server::run(const http_server::Options& options)
                           << inet_ntoa(peerAddr.sin_addr)
                           << ":" << ntohs(peerAddr.sin_port)
                           << std::endl;
+            }
+            char buf[1024];
+            ssize_t received = recv(clientfd, &buf, sizeof(buf), 0);
+            switch (received)
+            {
+                case -1:
+                    perror("recv");
+                    break;
+                case 0:
+                    break;
+                default:
+                    if (options.verbose()) {
+                        std::cout << "Received: ";
+                        outputBinaryData(buf, received);
+                    }
+
+                    const char notFound[] = "HTTP/1.0 404 Not Found\r\n"
+                                            "Content-Length:37\r\n"
+                                            "\r\n"
+                                            "<html><body>Not Found</body></html>\r\n";
+                    std::cout << "Send: ";
+                    outputBinaryData(notFound, sizeof(notFound) - 1);
+                    if (send(clientfd, notFound, sizeof(notFound) - 1, 0) == -1)
+                        perror("send");
+                    break;
             }
         } else {
             perror("accept");
