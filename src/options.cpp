@@ -11,7 +11,7 @@ void printUsage(const char * name)
 {
     std::cerr
         << "Usage: " << name
-        << " [-h <ip>] [-p <port>] [-d <directory>] [-n]"
+        << " [-h <ip>] [-p <port>] [-d <directory>] [-n] [-s]"
         << std::endl;
 }
 
@@ -24,7 +24,8 @@ Options::Options():
     ip_("0.0.0.0"),
     port_(1080),
     directory_("."),
-    daemon_(true)
+    daemon_(true),
+    verbose_(true)
 {}
 
 void Options::setIp(const char* ip)
@@ -47,6 +48,11 @@ void Options::setDaemon(bool daemon)
     daemon_ = daemon;
 }
 
+void Options::setVerbose(bool verbose)
+{
+    verbose_ = verbose;
+}
+
 const char* Options::ip() const
 {
     return ip_.c_str();
@@ -67,6 +73,10 @@ bool Options::daemon() const
     return daemon_;
 }
 
+bool Options::verbose() const
+{
+    return verbose_;
+}
 
 } /* namespace http_server */
 
@@ -90,6 +100,9 @@ http_server::Options http_server::parseArgs(int argc, char* const argv[])
                 break;
             case 'n':
                 options.setDaemon(false);
+                break;
+            case 's':
+                options.setVerbose(false);
                 break;
             case '?':
                 printUsage(argv[0]);
