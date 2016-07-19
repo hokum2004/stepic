@@ -136,6 +136,7 @@ void outputBinaryData(const char * data, size_t size)
 int sendData(int sockfd, const char * data, size_t size, bool verbose, std::ofstream& logout)
 {
     logout << std::string(data, size);
+    logout.flush();
 
     if (verbose)
     {
@@ -249,6 +250,10 @@ void clientWorker(aux::UniqueFd&& sockfd,
             }
 
             std::string filename(getLine + 4, protocolStr - getLine - 5);
+            std::string::size_type pos = filename.find('?');
+            if (pos != std::string::npos) {
+                filename = filename.substr(0, pos);
+            }
 
             std::filebuf file;
             if (file.open(options.directory() + filename, std::ios_base::in) == nullptr)
