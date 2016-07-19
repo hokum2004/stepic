@@ -4,6 +4,9 @@
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
+#include <cstring>
+#include <sstream>
+#include <fstream>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -122,8 +125,137 @@ void outputBinaryData(const char * data, size_t size)
     for(size_t i = 0; i < size; ++i)
         std::cout << std::setw(2) << std::hex
                   << static_cast<int>(data[i]) << " ";
-    std::cout << std::endl;
     std::cout << std::setfill(' ');
+    std::cout << std::dec;
+    std::cout << std::endl;
+    std::cout << std::endl;
+}
+
+int sendData(int sockfd, const char * data, size_t size, bool verbose)
+{
+    if (verbose)
+    {
+        std::cout << "Send: ";
+        outputBinaryData(data, size);
+    }
+
+    int res = send(sockfd, data, size, 0);
+    if (res == -1)
+        perror("send");
+
+    return res;
+}
+
+int sendBadRequest(int sockfd, bool verbose)
+{
+    static const char badRequest[] = "HTTP/1.0 400 Bad Request\r\n"
+                                     "Content-Length:43\r\n"
+                                     "\r\n"
+                                     "<html><body>400 Bad Request</body></html>\r\n";
+
+    return sendData(sockfd, badRequest, sizeof(badRequest) - 1, verbose);
+}
+
+int sendNotFound(int sockfd, bool verbose)
+{
+    static const char notFound[] = "HTTP/1.0 404 Not Found\r\n"
+                                   "Content-Length:41\r\n"
+                                   "\r\n"
+                                   "<html><body>404 Not Found</body></html>\r\n";
+
+    return sendData(sockfd, notFound, sizeof(notFound) - 1, verbose);
+}
+
+int sendAnswer(int sockfd, const std::string& data, bool verbose)
+{
+    std::ostringstream os;
+    os << "HTTP/1.0 200 OK\r\n" 
+       << "Content-Length:" << data.length() << "\r\n"
+       << "\r\n"
+       << data;
+
+    return sendData(sockfd, os.str().c_str(), os.str().length(), verbose);
+}
+
+void clientWorker(aux::UniqueFd&& sockfd,
+                  const sockaddr_in peerAddr,
+                  const http_server::Options& options)
+{
+    aux::UniqueFd clientfd(std::move(sockfd));
+    if (options.verbose()) {
+        std::cout << "Connection with: "
+                  << inet_ntoa(peerAddr.sin_addr)
+                  << ":" << ntohs(peerAddr.sin_port)
+                  << std::endl;
+    }
+    char buf[1024];
+    ssize_t received = recv(clientfd, &buf, sizeof(buf), 0);
+    switch (received)
+    {
+        case -1:
+            perror("recv");
+            break;
+        case 0:
+            break;
+        default:
+            if (options.verbose()) {
+                std::cout << "Received: ";
+                outputBinaryData(buf, received);
+            }
+
+            const char* getLine = std::strtok(buf, "\r\n");
+
+            if ((getLine == NULL) || (strncmp(getLine, "GET ", 4) != 0))
+            {
+                sendBadRequest(clientfd, options.verbose());
+                return;
+            }
+
+            const char* protocolStr = std::strrchr(getLine, 'H');
+            if ((protocolStr == NULL) || (std::strncmp(protocolStr, "HTTP/", 5) != 0))
+            {
+                sendBadRequest(clientfd, options.verbose());
+                return;
+            }
+
+            std::string filename(getLine + 4, protocolStr - getLine - 5);
+
+            std::filebuf file;
+            if (file.open(options.directory() + filename, std::ios_base::in) == nullptr)
+            {
+                sendNotFound(clientfd, options.verbose());
+                return;
+            }
+
+            using std::ios_base;
+            auto posEnd = file.pubseekoff(0, ios_base::end);
+            file.pubseekpos(0);
+
+            //sendAnswer(clientfd, filename, options.verbose());
+
+            if (options.verbose())
+                std::cout << "Sending header..." << std::endl;
+
+            std::ostringstream os;
+            os << "HTTP/1.0 200 OK\r\n" 
+               << "Content-Length:" << posEnd << "\r\n"
+               << "\r\n";
+
+            if (sendData(clientfd, os.str().c_str(), os.str().length(), options.verbose()) == -1)
+                return;
+
+            if (options.verbose())
+                std::cout << "Sending content..." << std::endl;
+            int read = 0;
+            do
+            {
+                read = file.sgetn(buf, sizeof(buf));
+                if (sendData(clientfd, buf, read, options.verbose()) == -1)
+                    return;
+            } while(read == sizeof(buf));
+
+            break;
+    }
 }
 
 } /* anonymous namespace */
@@ -150,37 +282,7 @@ int http_server::run(const http_server::Options& options)
             };
 
         if (clientfd) {
-            if (options.verbose()) {
-                std::cout << "Connection with: "
-                          << inet_ntoa(peerAddr.sin_addr)
-                          << ":" << ntohs(peerAddr.sin_port)
-                          << std::endl;
-            }
-            char buf[1024];
-            ssize_t received = recv(clientfd, &buf, sizeof(buf), 0);
-            switch (received)
-            {
-                case -1:
-                    perror("recv");
-                    break;
-                case 0:
-                    break;
-                default:
-                    if (options.verbose()) {
-                        std::cout << "Received: ";
-                        outputBinaryData(buf, received);
-                    }
-
-                    const char notFound[] = "HTTP/1.0 404 Not Found\r\n"
-                                            "Content-Length:37\r\n"
-                                            "\r\n"
-                                            "<html><body>Not Found</body></html>\r\n";
-                    std::cout << "Send: ";
-                    outputBinaryData(notFound, sizeof(notFound) - 1);
-                    if (send(clientfd, notFound, sizeof(notFound) - 1, 0) == -1)
-                        perror("send");
-                    break;
-            }
+            clientWorker(std::move(clientfd), peerAddr, options);
         } else {
             perror("accept");
         }
