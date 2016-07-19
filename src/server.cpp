@@ -224,6 +224,7 @@ void clientWorker(aux::UniqueFd&& sockfd,
             }
 
             logout << std::string(buf, received);
+            logout.flush();
 
             const char* getLine = std::strtok(buf, "\r\n");
 
