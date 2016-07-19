@@ -153,7 +153,8 @@ int sendData(int sockfd, const char * data, size_t size, bool verbose, std::ofst
 int sendBadRequest(int sockfd, bool verbose, std::ofstream& logout)
 {
     static const char badRequest[] = "HTTP/1.0 400 Bad Request\r\n"
-                                     "Content-Length:43\r\n"
+                                     "Content-Type: text/html\r\n"
+                                     "Content-Length: 43\r\n"
                                      "\r\n"
                                      "<html><body>400 Bad Request</body></html>\r\n";
 
@@ -163,7 +164,8 @@ int sendBadRequest(int sockfd, bool verbose, std::ofstream& logout)
 int sendNotFound(int sockfd, bool verbose, std::ofstream& logout)
 {
     static const char notFound[] = "HTTP/1.0 404 Not Found\r\n"
-                                   "Content-Length:41\r\n"
+                                   "Content-Type: text/html\r\n"
+                                   "Content-Length: 41\r\n"
                                    "\r\n"
                                    "<html><body>404 Not Found</body></html>\r\n";
 
@@ -174,7 +176,8 @@ int sendAnswer(int sockfd, const std::string& data, bool verbose, std::ofstream&
 {
     std::ostringstream os;
     os << "HTTP/1.0 200 OK\r\n" 
-       << "Content-Length:" << data.length() << "\r\n"
+       << "Content-Type: text/html\r\n"
+       << "Content-Length: " << data.length() << "\r\n"
        << "\r\n"
        << data;
 
@@ -258,7 +261,8 @@ void clientWorker(aux::UniqueFd&& sockfd,
             std::ostringstream os;
             int fileSize = posEnd;
             os << "HTTP/1.0 200 OK\r\n" 
-               << "Content-Length:" << (fileSize - 1) << "\r\n"
+               << "Content-type: text/html\r\n"
+               << "Content-Length: " << (fileSize - 1) << "\r\n"
                << "\r\n";
 
             int read = 0;
