@@ -9,6 +9,7 @@
 #include <fstream>
 #include <thread>
 
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -134,6 +135,17 @@ void outputBinaryData(const char * data, size_t size)
 
 int sendData(int sockfd, const char * data, size_t size, bool verbose)
 {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    std::ostringstream os;
+    os << "/tmp/" << tv.tv_sec << "_" << tv.tv_usec << ".log";
+    std::string logName = os.str();
+    os.str("");
+
+    std::ofstream log(logName);
+    log << std::string(data, size);
+    log.close();
+
     if (verbose)
     {
         std::cout << "Send: ";
