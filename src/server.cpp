@@ -193,7 +193,7 @@ void clientWorker(aux::UniqueFd&& sockfd,
         gettimeofday(&tv, NULL);
         std::ostringstream os;
         os << "/tmp/" << tv.tv_sec << "_" << tv.tv_usec << ".log";
-        std::string logName = os.str();
+        logName = os.str();
         os.str("");
     }
 
