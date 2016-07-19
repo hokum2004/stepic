@@ -310,6 +310,7 @@ int http_server::run(const http_server::Options& options)
         return EXIT_FAILURE;
 
     std::ofstream logout("/tmp/mainfinal.log");
+    logout << "start" << std::endl;
 
     while(!terminated) {
         struct sockaddr_in peerAddr;
@@ -335,6 +336,9 @@ int http_server::run(const http_server::Options& options)
 
     if (options.verbose())
         std::cout << "The server stoped" << std::endl;
+
+    logout << "stop\n";
+    logout.close();
 
     return 0;
 }
