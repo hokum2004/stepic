@@ -242,9 +242,16 @@ void clientWorker(aux::UniqueFd&& sockfd,
                << "Content-Length:" << posEnd << "\r\n"
                << "\r\n";
 
+            int read = 0;
+            do
+            {
+                read = file.sgetn(buf, sizeof(buf));
+                os << std::string(buf, read);
+            } while(read == sizeof(buf));
+
             if (sendData(clientfd, os.str().c_str(), os.str().length(), options.verbose()) == -1)
                 return;
-
+/*
             if (options.verbose())
                 std::cout << "Sending content..." << std::endl;
             int read = 0;
@@ -254,7 +261,7 @@ void clientWorker(aux::UniqueFd&& sockfd,
                 if (sendData(clientfd, buf, read, options.verbose()) == -1)
                     return;
             } while(read == sizeof(buf));
-
+*/
             break;
     }
 }
