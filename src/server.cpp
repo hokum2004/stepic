@@ -186,7 +186,9 @@ int sendAnswer(int sockfd, const std::string& data, bool verbose, std::ofstream&
 
 void clientWorker(aux::UniqueFd&& sockfd,
                   const sockaddr_in peerAddr,
-                  const http_server::Options& options)
+                  const http_server::Options& options,
+                  std::ofstream& logout
+                  )
 {
     aux::UniqueFd clientfd(std::move(sockfd));
 
@@ -200,7 +202,7 @@ void clientWorker(aux::UniqueFd&& sockfd,
         os.str("");
     }
 
-    std::ofstream logout(logName);
+    //std::ofstream logout(logName);
 
     if (options.verbose()) {
         std::cout << "Connection with: "
@@ -327,7 +329,7 @@ int http_server::run(const http_server::Options& options)
                    << inet_ntoa(peerAddr.sin_addr)
                    << ":" << ntohs(peerAddr.sin_port)
                    << "\n" << std::endl;
-            std::thread t(clientWorker, std::move(clientfd), peerAddr, options);
+            std::thread t(clientWorker, std::move(clientfd), peerAddr, options, std::ref(logout));
             t.detach();
         } else {
             perror("accept");
