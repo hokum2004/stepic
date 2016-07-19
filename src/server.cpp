@@ -249,6 +249,8 @@ void clientWorker(aux::UniqueFd&& sockfd,
                 os << std::string(buf, read);
             } while(read == sizeof(buf));
 
+            os << "\r\n";
+
             if (sendData(clientfd, os.str().c_str(), os.str().length(), options.verbose()) == -1)
                 return;
 /*
