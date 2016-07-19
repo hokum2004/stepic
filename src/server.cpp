@@ -309,6 +309,8 @@ int http_server::run(const http_server::Options& options)
     if (!startListen(sockfd, options))
         return EXIT_FAILURE;
 
+    std::ofstream logout("/tmp/mainfinal.log");
+
     while(!terminated) {
         struct sockaddr_in peerAddr;
         socklen_t peerAddrSize = sizeof(peerAddr);
@@ -320,6 +322,10 @@ int http_server::run(const http_server::Options& options)
 
         if (clientfd) {
             //clientWorker(std::move(clientfd), peerAddr, options);
+            logout << "Connection with: "
+                   << inet_ntoa(peerAddr.sin_addr)
+                   << ":" << ntohs(peerAddr.sin_port)
+                   << "\n" << std::endl;
             std::thread t(clientWorker, std::move(clientfd), peerAddr, options);
             t.detach();
         } else {
