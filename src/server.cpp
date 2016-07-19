@@ -133,18 +133,9 @@ void outputBinaryData(const char * data, size_t size)
     std::cout << std::endl;
 }
 
-int sendData(int sockfd, const char * data, size_t size, bool verbose)
+int sendData(int sockfd, const char * data, size_t size, bool verbose, std::ofstream& logout)
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    std::ostringstream os;
-    os << "/tmp/" << tv.tv_sec << "_" << tv.tv_usec << ".log";
-    std::string logName = os.str();
-    os.str("");
-
-    std::ofstream log(logName);
-    log << std::string(data, size);
-    log.close();
+    logout << std::string(data, size);
 
     if (verbose)
     {
@@ -159,27 +150,27 @@ int sendData(int sockfd, const char * data, size_t size, bool verbose)
     return res;
 }
 
-int sendBadRequest(int sockfd, bool verbose)
+int sendBadRequest(int sockfd, bool verbose, std::ofstream& logout)
 {
     static const char badRequest[] = "HTTP/1.0 400 Bad Request\r\n"
                                      "Content-Length:43\r\n"
                                      "\r\n"
                                      "<html><body>400 Bad Request</body></html>\r\n";
 
-    return sendData(sockfd, badRequest, sizeof(badRequest) - 1, verbose);
+    return sendData(sockfd, badRequest, sizeof(badRequest) - 1, verbose, logout);
 }
 
-int sendNotFound(int sockfd, bool verbose)
+int sendNotFound(int sockfd, bool verbose, std::ofstream& logout)
 {
     static const char notFound[] = "HTTP/1.0 404 Not Found\r\n"
                                    "Content-Length:41\r\n"
                                    "\r\n"
                                    "<html><body>404 Not Found</body></html>\r\n";
 
-    return sendData(sockfd, notFound, sizeof(notFound) - 1, verbose);
+    return sendData(sockfd, notFound, sizeof(notFound) - 1, verbose, logout);
 }
 
-int sendAnswer(int sockfd, const std::string& data, bool verbose)
+int sendAnswer(int sockfd, const std::string& data, bool verbose, std::ofstream& logout)
 {
     std::ostringstream os;
     os << "HTTP/1.0 200 OK\r\n" 
@@ -187,7 +178,7 @@ int sendAnswer(int sockfd, const std::string& data, bool verbose)
        << "\r\n"
        << data;
 
-    return sendData(sockfd, os.str().c_str(), os.str().length(), verbose);
+    return sendData(sockfd, os.str().c_str(), os.str().length(), verbose, logout);
 }
 
 void clientWorker(aux::UniqueFd&& sockfd,
@@ -195,6 +186,19 @@ void clientWorker(aux::UniqueFd&& sockfd,
                   const http_server::Options& options)
 {
     aux::UniqueFd clientfd(std::move(sockfd));
+
+    std::string logName;
+    {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        std::ostringstream os;
+        os << "/tmp/" << tv.tv_sec << "_" << tv.tv_usec << ".log";
+        std::string logName = os.str();
+        os.str("");
+    }
+
+    std::ofstream logout(logName);
+
     if (options.verbose()) {
         std::cout << "Connection with: "
                   << inet_ntoa(peerAddr.sin_addr)
@@ -216,18 +220,20 @@ void clientWorker(aux::UniqueFd&& sockfd,
                 outputBinaryData(buf, received);
             }
 
+            logout << std::string(buf, received);
+
             const char* getLine = std::strtok(buf, "\r\n");
 
             if ((getLine == NULL) || (strncmp(getLine, "GET ", 4) != 0))
             {
-                sendBadRequest(clientfd, options.verbose());
+                sendBadRequest(clientfd, options.verbose(), logout);
                 return;
             }
 
             const char* protocolStr = std::strrchr(getLine, 'H');
             if ((protocolStr == NULL) || (std::strncmp(protocolStr, "HTTP/", 5) != 0))
             {
-                sendBadRequest(clientfd, options.verbose());
+                sendBadRequest(clientfd, options.verbose(), logout);
                 return;
             }
 
@@ -236,7 +242,7 @@ void clientWorker(aux::UniqueFd&& sockfd,
             std::filebuf file;
             if (file.open(options.directory() + filename, std::ios_base::in) == nullptr)
             {
-                sendNotFound(clientfd, options.verbose());
+                sendNotFound(clientfd, options.verbose(), logout);
                 return;
             }
 
@@ -262,7 +268,7 @@ void clientWorker(aux::UniqueFd&& sockfd,
                 os << std::string(buf, read);
             } while(read == sizeof(buf));
 
-            if (sendData(clientfd, os.str().c_str(), os.str().length(), options.verbose()) == -1)
+            if (sendData(clientfd, os.str().c_str(), os.str().length(), options.verbose(), logout) == -1)
                 return;
 /*
             if (options.verbose())
