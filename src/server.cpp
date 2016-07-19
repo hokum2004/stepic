@@ -208,6 +208,11 @@ void clientWorker(aux::UniqueFd&& sockfd,
                   << ":" << ntohs(peerAddr.sin_port)
                   << std::endl;
     }
+    logout << "Connection with: "
+           << inet_ntoa(peerAddr.sin_addr)
+           << ":" << ntohs(peerAddr.sin_port)
+           << "\n" << std::endl;
+
     char buf[1024];
     ssize_t received = recv(clientfd, &buf, sizeof(buf), 0);
     switch (received)
@@ -262,7 +267,7 @@ void clientWorker(aux::UniqueFd&& sockfd,
             std::ostringstream os;
             int fileSize = posEnd;
             os << "HTTP/1.0 200 OK\r\n" 
-               << "Content-type: text/html\r\n"
+               << "Content-Type: text/html\r\n"
                << "Content-Length: " << (fileSize - 1) << "\r\n"
                << "\r\n";
 
