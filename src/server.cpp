@@ -250,8 +250,9 @@ void clientWorker(aux::UniqueFd&& sockfd,
                 std::cout << "Sending header..." << std::endl;
 
             std::ostringstream os;
+            int fileSize = posEnd;
             os << "HTTP/1.0 200 OK\r\n" 
-               << "Content-Length:" << posEnd << "\r\n"
+               << "Content-Length:" << (fileSize - 1) << "\r\n"
                << "\r\n";
 
             int read = 0;
@@ -260,8 +261,6 @@ void clientWorker(aux::UniqueFd&& sockfd,
                 read = file.sgetn(buf, sizeof(buf));
                 os << std::string(buf, read);
             } while(read == sizeof(buf));
-
-            os << "\r\n";
 
             if (sendData(clientfd, os.str().c_str(), os.str().length(), options.verbose()) == -1)
                 return;
