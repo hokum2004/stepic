@@ -7,17 +7,17 @@ objects=$(notdir $(patsubst %.cpp, %.o, $(sources)))
 includes=$(addprefix -I, $(dirs))
 
 VPATH+=$(dirs)
-
-CXXFLAGS=-std=c++11 $(includes) -Wall -Wpedantic -Weffc++ -Woverloaded-virtual
+LIBS=pthread
+CXXFLAGS = -std=c++11 $(includes) -Wall -Wpedantic -Weffc++ -Woverloaded-virtual
 
 all: $(target)
 
 $(target): $(objects)
-	$(CXX) -o $(target) $(CXXFALGS) $(objects)
+	$(CXX) -o $(target) $(CXXFALGS) $(objects) $(addprefix -l,$(LIBS))
 
 %.dependencies: %.cpp
 	@echo ".cpp.d: "$< -\> $@
-	$(CXX) -MM $< > $@
+	$(CXX) -MM $< $(CXXFLAGS) > $@
 
 include $(dependencies)
 

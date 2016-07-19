@@ -11,7 +11,7 @@ void printUsage(const char * name)
 {
     std::cerr
         << "Usage: " << name
-        << " [-h <ip>] [-p <port>] [-d <directory>] [-n] [-s]"
+        << " [-h <ip>] [-p <port>] [-d <directory>] [-n] [-v]"
         << std::endl;
 }
 
@@ -25,7 +25,7 @@ Options::Options():
     port_(1080),
     directory_("."),
     daemon_(true),
-    verbose_(true)
+    verbose_(false)
 {}
 
 void Options::setIp(const char* ip)
@@ -85,7 +85,7 @@ http_server::Options http_server::parseArgs(int argc, char* const argv[])
 {
     http_server::Options options;
 
-    const char * const optstring = "h:p:d:n";
+    const char * const optstring = "h:p:d:nv";
     int opt = -1;
     while ((opt = getopt(argc, argv, optstring)) != -1) {
         switch(opt) {
@@ -101,8 +101,8 @@ http_server::Options http_server::parseArgs(int argc, char* const argv[])
             case 'n':
                 options.setDaemon(false);
                 break;
-            case 's':
-                options.setVerbose(false);
+            case 'v':
+                options.setVerbose(true);
                 break;
             case '?':
                 printUsage(argv[0]);

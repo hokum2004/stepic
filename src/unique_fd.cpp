@@ -9,19 +9,19 @@ namespace aux
 UniqueFd::UniqueFd(int fd):
     fd(fd)
 {
-    std::cout << __PRETTY_FUNCTION__ << ": " << this->fd << std::endl;
+    //std::cout << __PRETTY_FUNCTION__ << ": " << this->fd << std::endl;
 }
 
 UniqueFd::UniqueFd(UniqueFd&& that):
     fd(that.fd)
 {
-    std::cout << __PRETTY_FUNCTION__ << ": " << this->fd << std::endl;
+    //std::cout << __PRETTY_FUNCTION__ << ": " << this->fd << std::endl;
     that.fd = nullfd;
 }
 
 UniqueFd::~UniqueFd()
 {
-    std::cout << __PRETTY_FUNCTION__ << ": " << this->fd << std::endl;
+    //std::cout << __PRETTY_FUNCTION__ << ": " << this->fd << std::endl;
     reset(nullfd);
 }
 

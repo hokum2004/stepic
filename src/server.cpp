@@ -7,6 +7,7 @@
 #include <cstring>
 #include <sstream>
 #include <fstream>
+#include <thread>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -282,7 +283,9 @@ int http_server::run(const http_server::Options& options)
             };
 
         if (clientfd) {
-            clientWorker(std::move(clientfd), peerAddr, options);
+            //clientWorker(std::move(clientfd), peerAddr, options);
+            std::thread t(clientWorker, std::move(clientfd), peerAddr, options);
+            t.detach();
         } else {
             perror("accept");
         }
