@@ -25,7 +25,7 @@ Options::Options():
     port_(1080),
     directory_("."),
     daemon_(true),
-    verbose_(false)
+    verbose_(true)
 {}
 
 void Options::setIp(const char* ip)
